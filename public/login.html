@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - GovDocs</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    body { display: flex; align-items: center; justify-content: center; background: var(--sidebar-bg); }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h2>Acesso Restrito</h2>
+    <p>Insira suas credenciais do GovDocs</p>
+    <input type="email" id="login-email" placeholder="Email">
+    <input type="password" id="login-senha" placeholder="Senha">
+    <button id="btn-entrar">Entrar no Sistema</button>
+    <div id="login-erro" style="color: red; display: none; margin-top: 10px;">Credenciais inválidas.</div>
+  </div>
+
+  <script type="module">
+    import { auth } from "../firebase-config.js";
+    import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    document.getElementById("btn-entrar").addEventListener("click", async () => {
+      const email = document.getElementById("login-email").value;
+      const senha = document.getElementById("login-senha").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, senha);
+      } catch (error) {
+        document.getElementById("login-erro").style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>

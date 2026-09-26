@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Tarefas - GovDocs</title>
+  <link rel="manifest" href="../manifest.json">
+  <meta name="theme-color" content="#10233f">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+  <div class="mobile-topbar">GovDocs</div>
+
+  <aside class="sidebar">
+    <h1>GovDocs</h1>
+    <nav>
+      <a href="index.html">📊 Dashboard</a>
+      <a href="contratos.html">📄 Contratos</a>
+      <a href="projetos.html">🏗️ Projetos</a>
+      <a href="tarefas.html" class="active">✅ Tarefas</a>
+      <a href="configuracoes.html">⚙️ Configurações</a>
+      <a href="#" onclick="fazerLogout()" style="color: var(--danger); margin-top: 20px;">🚪 Sair</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header>
+      <div>
+        <h2>Tarefas Diárias</h2>
+        <p>Ações rápidas e rotinas</p>
+      </div>
+    </header>
+
+    <section class="card" style="min-height: 70vh;">
+      <div class="card-head">
+        <h3>Lista de Tarefas</h3>
+        <span class="count" id="tarefas-count">0</span>
+      </div>
+      <div class="list" id="tarefas-list" style="max-height: 100%;">
+        <div class="list-empty">Carregando tarefas...</div>
+      </div>
+      <div class="add-tarefa" style="margin-top: 20px;">
+        <input type="text" id="nova-tarefa-input" placeholder="O que precisa ser feito? (Ex: Ligar para a associação X)">
+        <button class="btn-add" onclick="adicionarTarefa()">Adicionar</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { db, auth } from "../firebase-config.js";
+    import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    window.db = db;
+    window.fazerLogout = async () => await signOut(auth);
+
+    function escapeHtml(str) {
+      const div = document.createElement("div"); div.textContent = str ?? ""; return div.innerHTML;
+    }
+
+    /* LÓGICA DE TAREFAS */
+    const tarefasRef = query(collection(db, "tarefas_diarias"), orderBy("criadoEm", "desc"));
+
+    onSnapshot(tarefasRef, (snap) => {
+      const list = document.getElementById("tarefas-list");
+      document.getElementById("tarefas-count").textContent = snap.size;
+
+      if (snap.empty) {
+        list.innerHTML = '<div class="list-empty">Nenhuma tarefa pendente. Excelente trabalho!</div>';
+        return;
+      }
+
+      list.innerHTML = "";
+      snap.forEach((docSnap) => {
+        const t = docSnap.data();
+        const el = document.createElement("div");
+        el.className = "tarefa-row" + (t.concluida ? " done" : "");
+        el.style.padding = "10px 0";
+        el.style.borderBottom = "1px solid var(--border)";
+        el.innerHTML = `
+          <input type="checkbox" ${t.concluida ? "checked" : ""} onchange="toggleTarefa('${docSnap.id}', this.checked)">
+          <span class="tarefa-text" style="font-size: 14px;">${escapeHtml(t.texto)}</span>
+          <button class="del-btn" style="position: static; margin-left: auto;" onclick="excluirTarefa('${docSnap.id}')">✕</button>
+        `;
+        list.appendChild(el);
+      });
+    });
+
+    window.adicionarTarefa = async () => {
+      const input = document.getElementById("nova-tarefa-input");
+      const texto = input.value.trim();
+      if (!texto) return;
+
+      await addDoc(collection(db, "tarefas_diarias"), {
+        texto,
+        concluida: false,
+        criadoEm: serverTimestamp()
+      });
+      input.value = "";
+    };
+
+    window.toggleTarefa = async (id, concluida) => {
+      await updateDoc(doc(db, "tarefas_diarias", id), { concluida });
+    };
+
+    window.excluirTarefa = async (id) => {
+      await deleteDoc(doc(db, "tarefas_diarias", id));
+    };
+
+    // Permite adicionar tarefa ao pressionar a tecla "Enter"
+    document.getElementById("nova-tarefa-input").addEventListener("keypress", function(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        window.adicionarTarefa();
+      }
+    });
+  </script>
+</body>
+</html>

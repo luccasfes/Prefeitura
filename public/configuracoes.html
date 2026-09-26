@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Configurações - GovDocs</title>
+  <link rel="manifest" href="../manifest.json">
+  <meta name="theme-color" content="#10233f">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+  <div class="mobile-topbar">GovDocs</div>
+
+  <aside class="sidebar">
+    <h1>GovDocs</h1>
+    <nav>
+      <a href="index.html">📊 Dashboard</a>
+      <a href="contratos.html">📄 Contratos</a>
+      <a href="projetos.html">🏗️ Projetos</a>
+      <a href="tarefas.html">✅ Tarefas</a>
+      <a href="configuracoes.html" class="active">⚙️ Configurações</a>
+      <a href="#" onclick="fazerLogout()" style="color: var(--danger); margin-top: 20px;">🚪 Sair</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header>
+      <div>
+        <h2>Configurações</h2>
+        <p>Ajustes do sistema e perfil de utilizador</p>
+      </div>
+    </header>
+
+    <!-- Usamos uma grid de 1 coluna limitada a 600px para ficar elegante num ecrã grande -->
+    <div class="grid" style="grid-template-columns: 1fr; max-width: 600px;">
+      
+      <!-- CARD PERFIL -->
+      <section class="card" style="min-height: auto;">
+        <div class="card-head">
+          <h3>Perfil da Conta</h3>
+        </div>
+        <div class="field" style="margin-top: 10px;">
+          <label>Email de Acesso</label>
+          <input type="text" id="user-email" disabled value="A carregar dados..." style="background-color: var(--bg); cursor: not-allowed;">
+          <small style="color: var(--muted); font-size: 11px; margin-top: 4px;">Este email é gerido através da consola do Firebase.</small>
+        </div>
+        
+        <div style="margin-top: 24px; display: flex; gap: 10px;">
+          <button class="btn-secondary" onclick="fazerLogout()" style="color: var(--danger); border-color: var(--danger); background: transparent;">
+            Sair da Conta (Logout)
+          </button>
+        </div>
+      </section>
+
+      <!-- CARD PREFERÊNCIAS -->
+      <section class="card" style="min-height: auto;">
+        <div class="card-head">
+          <h3>Preferências Locais</h3>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">
+          <label class="tarefa-row" style="cursor: pointer;">
+            <input type="checkbox" checked>
+            <span class="tarefa-text">Receber alertas de prazos a vencer (Em breve)</span>
+          </label>
+          <label class="tarefa-row" style="cursor: pointer;">
+            <input type="checkbox" id="btn-tema" disabled>
+            <span class="tarefa-text" style="color: var(--muted);">Modo Escuro (Em desenvolvimento)</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- CARD SOBRE -->
+      <section class="card" style="min-height: auto; text-align: center; padding: 30px;">
+        <h3 style="color: var(--sidebar-bg); margin-bottom: 8px;">GovDocs</h3>
+        <p style="font-size: 13px; color: var(--muted);">Versão 1.0.0 (MVP)<br>Painel de Gestão de Emendas e Contratos</p>
+      </section>
+
+    </div>
+  </main>
+
+  <script type="module">
+    import { auth } from "../firebase-config.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    // Função de Logout Global
+    window.fazerLogout = async () => {
+      if (confirm("Tem a certeza que deseja sair do sistema?")) {
+        await signOut(auth);
+      }
+    };
+
+    // Lê o estado atual da autenticação para mostrar o email da Marlene na tela
+    onAuthStateChanged(auth, (user) => {
+      const emailInput = document.getElementById("user-email");
+      if (user) {
+        emailInput.value = user.email;
+      } else {
+        emailInput.value = "Nenhum utilizador logado.";
+      }
+    });
+
+    /* ---------- PWA ---------- */
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch((err) => {
+          console.warn("Falha ao registrar o service worker:", err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

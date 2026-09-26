@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>GovDocs — Painel de Gestão de Emendas e Contratos</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="../manifest.json">
+  <meta name="theme-color" content="#10233f">
+  <link rel="icon" href="../icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="../icon-192.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GovDocs">
+
+  <!-- Estilo Centralizado -->
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+  <div class="mobile-topbar">GovDocs</div>
+
+  <aside class="sidebar">
+    <h1>GovDocs</h1>
+    <nav>
+      <a href="index.html" class="active">📊 Dashboard</a>
+      <a href="contratos.html">📄 Contratos</a>
+      <a href="projetos.html">🏗️ Projetos</a>
+      <a href="tarefas.html">✅ Tarefas</a>
+      <a href="configuracoes.html">⚙️ Configurações</a>
+      <a href="#" onclick="fazerLogout()" style="color: var(--danger); margin-top: 20px;">🚪 Sair</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header>
+      <div>
+        <h2>Painel Geral</h2>
+        <p>Prazos, vigências e tarefas centralizados em um só lugar</p>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- CARD 1: CONTRATOS -->
+      <section class="card">
+        <div class="card-head">
+          <h3>Contratos e Prazos a Vencer</h3>
+          <span class="count" id="contratos-count">0</span>
+        </div>
+        <div class="list" id="contratos-list">
+          <div class="list-empty">Carregando contratos...</div>
+        </div>
+        <button class="btn-add" onclick="abrirModalContrato()">+ Novo contrato</button>
+      </section>
+
+      <!-- CARD 2: PROJETOS -->
+      <section class="card">
+        <div class="card-head">
+          <h3>Próximos Passos / Projetos</h3>
+          <span class="count" id="projetos-count">0</span>
+        </div>
+        <div class="list" id="projetos-list">
+          <div class="list-empty">Carregando projetos...</div>
+        </div>
+        <button class="btn-add" onclick="abrirModalProjeto()">+ Novo projeto</button>
+      </section>
+
+      <!-- CARD 3: TAREFAS DIÁRIAS -->
+      <section class="card">
+        <div class="card-head">
+          <h3>Tarefas Diárias</h3>
+          <span class="count" id="tarefas-count">0</span>
+        </div>
+        <div class="list" id="tarefas-list">
+          <div class="list-empty">Carregando tarefas...</div>
+        </div>
+        <div class="add-tarefa">
+          <input type="text" id="nova-tarefa-input" placeholder="Nova tarefa...">
+          <button class="btn-add" onclick="adicionarTarefa()">+</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- MODAL: NOVO CONTRATO -->
+  <div class="modal-overlay" id="modal-contrato">
+    <div class="modal">
+      <h3>Novo Contrato</h3>
+      <div class="field">
+        <label>Título / Objeto</label>
+        <input type="text" id="c-titulo" placeholder="Ex: Fornecimento de merenda escolar">
+      </div>
+      <div class="field">
+        <label>Órgão / Secretaria</label>
+        <input type="text" id="c-orgao" placeholder="Ex: Secretaria de Educação">
+      </div>
+      <div class="field">
+        <label>Nº do Contrato</label>
+        <input type="text" id="c-numero" placeholder="Ex: 045/2026">
+      </div>
+      <div class="field">
+        <label>Esfera</label>
+        <select id="c-esfera">
+          <option value="Federal">Federal</option>
+          <option value="Estadual">Estadual</option>
+          <option value="Municipal" selected>Municipal</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Fornecedor</label>
+        <input type="text" id="c-fornecedor" placeholder="Ex: Empresa XYZ Ltda">
+      </div>
+      <div class="field">
+        <label>Data de Vencimento</label>
+        <input type="date" id="c-vencimento">
+      </div>
+      <div class="field">
+        <label>Observações</label>
+        <textarea id="c-obs" rows="2"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="fecharModal('modal-contrato')">Cancelar</button>
+        <button class="btn-primary" onclick="salvarContrato()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: NOVO PROJETO -->
+  <div class="modal-overlay" id="modal-projeto">
+    <div class="modal">
+      <h3>Novo Projeto</h3>
+      <div class="field">
+        <label>Título</label>
+        <input type="text" id="p-titulo" placeholder="Ex: Emenda parlamentar - reforma da UBS">
+      </div>
+      <div class="field">
+        <label>Descrição</label>
+        <textarea id="p-descricao" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label>Responsável</label>
+        <input type="text" id="p-responsavel" placeholder="Ex: João Silva">
+      </div>
+      <div class="field">
+        <label>Próxima Ação</label>
+        <input type="text" id="p-proxima-acao" placeholder="Ex: Enviar prestação de contas">
+      </div>
+      <div class="field">
+        <label>Prazo da Próxima Ação</label>
+        <input type="date" id="p-prazo">
+      </div>
+      <div class="field">
+        <label>Prioridade</label>
+        <select id="p-prioridade">
+          <option value="Alta">Alta</option>
+          <option value="Média" selected>Média</option>
+          <option value="Baixa">Baixa</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="fecharModal('modal-projeto')">Cancelar</button>
+        <button class="btn-primary" onclick="salvarProjeto()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db, auth } from "../firebase-config.js";
+import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+window.db = db;
+
+// Memória temporária para podermos carregar os dados ao clicar em "Editar"
+window.contratosCache = {};
+window.projetosCache = {};
+
+// Variáveis que dizem ao sistema se estamos a criar um novo ou a editar um existente
+let idContratoEdicao = null;
+let idProjetoEdicao = null;
+
+window.fazerLogout = async function() {
+  await signOut(auth);
+};
+
+/* ---------- HELPERS ---------- */
+function diasRestantes(timestamp) {
+  if (!timestamp) return null;
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const data = timestamp.toDate();
+  data.setHours(0, 0, 0, 0);
+  return Math.round((data - hoje) / (1000 * 60 * 60 * 24));
+}
+
+function formatarData(timestamp) {
+  if (!timestamp) return "-";
+  return timestamp.toDate().toLocaleDateString("pt-BR");
+}
+
+// Converte o Timestamp do Firestore de volta para o formato do input type="date" (YYYY-MM-DD)
+function formatToDateInput(timestamp) {
+  if (!timestamp) return "";
+  const date = timestamp.toDate();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function badgePorDias(dias) {
+  if (dias === null) return { classe: "success", texto: "Sem prazo" };
+  if (dias < 0) return { classe: "danger", texto: `Atrasado há ${Math.abs(dias)} dia(s)` };
+  if (dias <= 7) return { classe: "warning", texto: dias === 0 ? "Vence hoje" : `Vence em ${dias} dia(s)` };
+  return { classe: "success", texto: `Vence em ${dias} dia(s)` };
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str ?? "";
+  return div.innerHTML;
+}
+
+// Limpa todos os campos de um modal (inputs, selects e textareas)
+function limparCamposModal(modalId) {
+  document.querySelectorAll(`#${modalId} input, #${modalId} textarea, #${modalId} select`)
+    .forEach((el) => {
+      if (el.tagName === "SELECT") {
+        el.selectedIndex = 0;
+      } else {
+        el.value = "";
+      }
+    });
+}
+
+/* ---------- CONTRATOS ---------- */
+const contratosRef = query(collection(db, "contratos"), orderBy("data_vencimento", "asc"));
+
+onSnapshot(contratosRef, (snap) => {
+  const list = document.getElementById("contratos-list");
+  document.getElementById("contratos-count").textContent = snap.size;
+  window.contratosCache = {}; // Limpa a cache
+
+  if (snap.empty) {
+    list.innerHTML = '<div class="list-empty">Nenhum contrato cadastrado.</div>';
+    return;
+  }
+
+  list.innerHTML = "";
+  snap.forEach((docSnap) => {
+    const c = docSnap.data();
+    window.contratosCache[docSnap.id] = c; // Guarda os dados na cache
+    const dias = diasRestantes(c.data_vencimento);
+    const badge = badgePorDias(dias);
+
+    const el = document.createElement("div");
+    el.className = "item";
+    el.innerHTML = `
+      <div class="action-buttons">
+        <button class="del-btn" onclick="editarContrato('${docSnap.id}')">✏️</button>
+        <button class="del-btn" style="color: var(--danger);" onclick="excluirContrato('${docSnap.id}')">✕</button>
+      </div>
+      <div class="item-title">${escapeHtml(c.titulo)}</div>
+      <div class="item-sub">${escapeHtml(c.orgao || "")} ${c.numero ? "· nº " + escapeHtml(c.numero) : ""}</div>
+      <div class="item-sub">Vencimento: ${formatarData(c.data_vencimento)}</div>
+      <span class="badge ${badge.classe}">${badge.texto}</span>
+    `;
+    list.appendChild(el);
+  });
+});
+
+// Esta função prepara e abre o modal quando queres EDITAR
+window.editarContrato = (id) => {
+  idContratoEdicao = id;
+  const c = window.contratosCache[id];
+
+  document.getElementById("c-titulo").value = c.titulo || "";
+  document.getElementById("c-orgao").value = c.orgao || "";
+  document.getElementById("c-numero").value = c.numero || "";
+  document.getElementById("c-esfera").value = c.esfera || "Municipal";
+  document.getElementById("c-fornecedor").value = c.fornecedor || "";
+  document.getElementById("c-obs").value = c.observacoes || "";
+  document.getElementById("c-vencimento").value = formatToDateInput(c.data_vencimento);
+
+  document.getElementById("modal-contrato").classList.add("open");
+};
+
+window.salvarContrato = async () => {
+      const titulo = document.getElementById("c-titulo").value.trim();
+      const vencimentoStr = document.getElementById("c-vencimento").value;
+
+      if (!titulo || !vencimentoStr) { 
+        alert("Preencha ao menos o título e a data de vencimento."); 
+        return; 
+      }
+
+      // 1. Prepara os dados
+      const dadosParaSalvar = {
+        titulo,
+        orgao: document.getElementById("c-orgao").value.trim(),
+        numero: document.getElementById("c-numero").value.trim(),
+        esfera: document.getElementById("c-esfera").value,
+        fornecedor: document.getElementById("c-fornecedor").value.trim(),
+        data_vencimento: Timestamp.fromDate(new Date(vencimentoStr + "T00:00:00")),
+        observacoes: document.getElementById("c-obs").value.trim()
+      };
+
+      const eraEdicao = !!idContratoEdicao;
+      const idAtual = idContratoEdicao;
+
+      // 2. FECHA E LIMPA O MODAL IMEDIATAMENTE (Sensação de rapidez máxima)
+      document.getElementById("modal-contrato").classList.remove("open");
+      document.querySelectorAll("#modal-contrato input, #modal-contrato textarea").forEach(i => i.value = "");
+      document.getElementById("c-esfera").value = "Municipal";
+      idContratoEdicao = null;
+
+      // 3. Envia os dados para o Firebase em segundo plano
+      try {
+        if (eraEdicao) {
+          await updateDoc(doc(db, "contratos", idAtual), dadosParaSalvar);
+        } else {
+          dadosParaSalvar.criadoEm = serverTimestamp();
+          await addDoc(collection(db, "contratos"), dadosParaSalvar);
+        }
+      } catch (error) {
+        console.error("Erro ao guardar contrato no Firebase:", error);
+        alert("Ocorreu um erro ao gravar os dados. Verifica a tua ligação ou as permissões do Firebase.");
+      }
+    };
+
+window.excluirContrato = async function (id) {
+  if (confirm("Excluir este contrato?")) {
+    await deleteDoc(doc(db, "contratos", id));
+  }
+};
+
+/* ---------- PROJETOS ---------- */
+const projetosRef = query(collection(db, "projetos"), orderBy("data_prazo", "asc"));
+
+onSnapshot(projetosRef, (snap) => {
+  const list = document.getElementById("projetos-list");
+  document.getElementById("projetos-count").textContent = snap.size;
+  window.projetosCache = {};
+
+  if (snap.empty) {
+    list.innerHTML = '<div class="list-empty">Nenhum projeto cadastrado.</div>';
+    return;
+  }
+
+  list.innerHTML = "";
+  snap.forEach((docSnap) => {
+    const p = docSnap.data();
+    window.projetosCache[docSnap.id] = p;
+    const dias = diasRestantes(p.data_prazo);
+    const badge = badgePorDias(dias);
+
+    const el = document.createElement("div");
+    el.className = "item";
+    el.innerHTML = `
+      <div class="action-buttons">
+        <button class="del-btn" onclick="editarProjeto('${docSnap.id}')">✏️</button>
+        <button class="del-btn" style="color: var(--danger);" onclick="excluirProjeto('${docSnap.id}')">✕</button>
+      </div>
+      <div class="item-title">${escapeHtml(p.titulo)}</div>
+      <div class="item-sub">Próxima ação: ${escapeHtml(p.proxima_acao || "-")}</div>
+      <div class="item-sub">Responsável: ${escapeHtml(p.responsavel || "-")} · Prioridade: ${escapeHtml(p.prioridade || "-")}</div>
+      <span class="badge ${badge.classe}">${badge.texto}</span>
+    `;
+    list.appendChild(el);
+  });
+});
+
+window.editarProjeto = (id) => {
+  idProjetoEdicao = id;
+  const p = window.projetosCache[id];
+
+  document.getElementById("p-titulo").value = p.titulo || "";
+  document.getElementById("p-descricao").value = p.descricao || "";
+  document.getElementById("p-responsavel").value = p.responsavel || "";
+  document.getElementById("p-proxima-acao").value = p.proxima_acao || "";
+  document.getElementById("p-prioridade").value = p.prioridade || "Média";
+  document.getElementById("p-prazo").value = formatToDateInput(p.data_prazo);
+
+  document.getElementById("modal-projeto").classList.add("open");
+};
+
+window.salvarProjeto = async function () {
+  const titulo = document.getElementById("p-titulo").value.trim();
+  const prazoStr = document.getElementById("p-prazo").value;
+
+  if (!titulo || !prazoStr) {
+    alert("Preencha ao menos o título e o prazo da próxima ação.");
+    return;
+  }
+
+  const dadosParaSalvar = {
+    titulo,
+    descricao: document.getElementById("p-descricao").value.trim(),
+    responsavel: document.getElementById("p-responsavel").value.trim(),
+    proxima_acao: document.getElementById("p-proxima-acao").value.trim(),
+    data_prazo: Timestamp.fromDate(new Date(prazoStr + "T00:00:00")),
+    prioridade: document.getElementById("p-prioridade").value
+  };
+
+  const eraEdicao = !!idProjetoEdicao;
+
+  try {
+    if (idProjetoEdicao) {
+      await updateDoc(doc(db, "projetos", idProjetoEdicao), dadosParaSalvar);
+    } else {
+      dadosParaSalvar.criadoEm = serverTimestamp();
+      await addDoc(collection(db, "projetos"), dadosParaSalvar);
+    }
+  } catch (erro) {
+    console.error("Erro ao salvar projeto:", erro);
+    alert("Não foi possível salvar o projeto.\n\nErro: " + erro.message);
+    return; // não fecha nem limpa o modal, pra você poder tentar de novo
+  }
+
+  idProjetoEdicao = null;
+
+  // 1. Fecha o modal
+  window.fecharModal("modal-projeto");
+
+  // 2. Limpa todos os campos para não ficarem presos da próxima vez
+  limparCamposModal("modal-projeto");
+  document.getElementById("p-prioridade").value = "Média";
+
+  // 3. Notifica que foi salvo
+  setTimeout(() => {
+    alert(eraEdicao ? "Projeto atualizado com sucesso!" : "Projeto cadastrado com sucesso!");
+  }, 150);
+};
+
+window.excluirProjeto = async function (id) {
+  if (confirm("Excluir este projeto?")) {
+    await deleteDoc(doc(db, "projetos", id));
+  }
+};
+
+/* ---------- TAREFAS DIÁRIAS ---------- */
+const tarefasRef = query(collection(db, "tarefas_diarias"), orderBy("criadoEm", "desc"));
+
+onSnapshot(tarefasRef, (snap) => {
+  const list = document.getElementById("tarefas-list");
+  document.getElementById("tarefas-count").textContent = snap.size;
+
+  if (snap.empty) {
+    list.innerHTML = '<div class="list-empty">Nenhuma tarefa cadastrada.</div>';
+    return;
+  }
+
+  list.innerHTML = "";
+  snap.forEach((docSnap) => {
+    const t = docSnap.data();
+    const el = document.createElement("div");
+    el.className = "tarefa-row" + (t.concluida ? " done" : "");
+    el.innerHTML = `
+      <input type="checkbox" ${t.concluida ? "checked" : ""} onchange="toggleTarefa('${docSnap.id}', this.checked)">
+      <span class="tarefa-text">${escapeHtml(t.texto)}</span>
+      <button class="del-btn" style="position: static; margin-left: auto;" onclick="excluirTarefa('${docSnap.id}')">✕</button>
+    `;
+    list.appendChild(el);
+  });
+});
+
+window.adicionarTarefa = async function () {
+  const input = document.getElementById("nova-tarefa-input");
+  const texto = input.value.trim();
+  if (!texto) return;
+
+  await addDoc(collection(db, "tarefas_diarias"), {
+    texto,
+    concluida: false,
+    criadoEm: serverTimestamp()
+  });
+  input.value = "";
+};
+
+window.toggleTarefa = async function (id, concluida) {
+  await updateDoc(doc(db, "tarefas_diarias", id), { concluida });
+};
+
+window.excluirTarefa = async function (id) {
+  await deleteDoc(doc(db, "tarefas_diarias", id));
+};
+
+/* ---------- MODAIS (Limpeza Automática ao criar Novo) ---------- */
+window.abrirModalContrato = () => {
+  idContratoEdicao = null; // Garante que é um novo registo
+  limparCamposModal("modal-contrato");
+  document.getElementById("c-esfera").value = "Municipal";
+  document.getElementById("modal-contrato").classList.add("open");
+};
+
+window.abrirModalProjeto = () => {
+  idProjetoEdicao = null; // Garante que é um novo registo
+  limparCamposModal("modal-projeto");
+  document.getElementById("p-prioridade").value = "Média";
+  document.getElementById("modal-projeto").classList.add("open");
+};
+
+window.fecharModal = (id) => document.getElementById(id).classList.remove("open");
+
+/* ---------- PWA ---------- */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch((err) => {
+      console.warn("Falha ao registrar o service worker:", err);
+    });
+  });
+}
+  </script>
+</body>
+</html>
