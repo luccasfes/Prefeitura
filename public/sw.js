@@ -3,8 +3,8 @@ const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./icon-192.png",
-  "./icon-512.png"
+  "./images/icon-192.png",
+  "./images/icon-512.png"
 ];
 
 // Instala e guarda o "esqueleto" do app em cache

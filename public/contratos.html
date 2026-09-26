@@ -2,236 +2,130 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Contratos - GovDocs</title>
-  <link rel="manifest" href="../manifest.json">
-  <meta name="theme-color" content="#10233f">
-  <link rel="stylesheet" href="../style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GovDocs - Gestão de Contratos</title>
+
+  <!-- Estilos e PWA -->
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/imagens/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="/imagens/icon-192.png">
+  <meta name="theme-color" content="#0056b3">
 </head>
 <body>
 
-  <div class="mobile-topbar">GovDocs</div>
+  <!-- Topo do Sistema -->
+  <header class="app-header">
+    <div class="header-container">
+      <span class="logo-title">GovDocs</span>
+    </div>
+  </header>
 
-  <aside class="sidebar">
-    <h1>GovDocs</h1>
-    <nav>
-      <a href="index.html">📊 Dashboard</a>
-      <a href="contratos.html" class="active">📄 Contratos</a>
-      <a href="projetos.html">🏗️ Projetos</a>
-      <a href="tarefas.html">✅ Tarefas</a>
-      <a href="configuracoes.html">⚙️ Configurações</a>
-      <a href="#" onclick="fazerLogout()" style="color: var(--danger); margin-top: 20px;">🚪 Sair</a>
-    </nav>
-  </aside>
-
-  <main class="main">
-    <header>
-      <div>
-        <h2>Gestão de Contratos</h2>
-        <p>Acompanhamento de vigências e emendas</p>
-      </div>
-      <button class="btn-add" onclick="abrirModalContrato()">+ Novo contrato</button>
-    </header>
-
-    <section class="card" style="min-height: 70vh;">
-      <div class="card-head">
-        <h3>Lista de Contratos</h3>
-        <span class="count" id="contratos-count">0</span>
-      </div>
-      <div class="list" id="contratos-list" style="max-height: 100%;">
-        <div class="list-empty">Carregando contratos...</div>
-      </div>
+  <!-- Conteúdo Principal -->
+  <main class="main-container">
+    <section class="section-title">
+      <h2>Contratos e Vigências</h2>
+      <p>Acompanhamento detalhado de contratos, fornecedores e vencimentos</p>
     </section>
+
+    <!-- Barra de Filtros e Adicionar -->
+    <div class="actions-bar" style="display: flex; gap: 8px; margin-bottom: 16px;">
+      <button type="button" class="btn-primary" id="btn-novo-contrato" style="flex: 1;">+ Novo Contrato</button>
+    </div>
+
+    <!-- Lista Completa de Contratos -->
+    <div class="dashboard-card">
+      <div class="card-header">
+        <h3>Lista de Contratos</h3>
+        <span class="counter-badge" id="badge-contratos">0</span>
+      </div>
+      <div class="card-body" id="lista-contratos">
+        <p class="placeholder-text">A carregar contratos...</p>
+      </div>
+    </div>
   </main>
 
-  <!-- MODAL: NOVO CONTRATO -->
+  <!-- Modal de Criação / Edição de Contrato -->
   <div class="modal-overlay" id="modal-contrato">
-    <div class="modal">
-      <h3>Contrato</h3>
-      <div class="field">
-        <label>Título / Objeto</label>
-        <input type="text" id="c-titulo" placeholder="Ex: Fornecimento de merenda escolar">
-      </div>
-      <div class="field">
-        <label>Órgão / Secretaria</label>
-        <input type="text" id="c-orgao" placeholder="Ex: Secretaria de Educação">
-      </div>
-      <div class="field">
-        <label>Nº do Contrato</label>
-        <input type="text" id="c-numero" placeholder="Ex: 045/2026">
-      </div>
-      <div class="field">
-        <label>Esfera</label>
-        <select id="c-esfera">
-          <option value="Federal">Federal</option>
-          <option value="Estadual">Estadual</option>
-          <option value="Municipal" selected>Municipal</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Fornecedor</label>
-        <input type="text" id="c-fornecedor" placeholder="Ex: Empresa XYZ Ltda">
-      </div>
-      <div class="field">
-        <label>Data de Vencimento</label>
-        <input type="date" id="c-vencimento">
-      </div>
-      <div class="field">
-        <label>Observações</label>
-        <textarea id="c-obs" rows="2"></textarea>
-      </div>
-      <div class="modal-actions">
-        <button class="btn-secondary" onclick="fecharModal('modal-contrato')">Cancelar</button>
-        <button class="btn-primary" onclick="salvarContrato()">Salvar</button>
-      </div>
+    <div class="modal-content">
+      <h3 id="modal-contrato-titulo">Novo Contrato</h3>
+      <form id="form-contrato">
+        <div class="form-group">
+          <label for="c-titulo">Título / Objeto</label>
+          <input type="text" id="c-titulo" placeholder="Ex: Fornecimento de merenda escolar" required>
+        </div>
+
+        <div class="form-group">
+          <label for="c-orgao">Órgão / Secretaria</label>
+          <input type="text" id="c-orgao" placeholder="Ex: Secretaria de Educação">
+        </div>
+
+        <div class="form-group">
+          <label for="c-numero">Nº do Contrato</label>
+          <input type="text" id="c-numero" placeholder="Ex: 045/2026">
+        </div>
+
+        <div class="form-group">
+          <label for="c-esfera">Esfera</label>
+          <select id="c-esfera">
+            <option value="Municipal">Municipal</option>
+            <option value="Estadual">Estadual</option>
+            <option value="Federal">Federal</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="c-fornecedor">Fornecedor</label>
+          <input type="text" id="c-fornecedor" placeholder="Ex: Empresa XYZ Ltda">
+        </div>
+
+        <div class="form-group">
+          <label for="c-vencimento">Data de Vencimento</label>
+          <input type="date" id="c-vencimento" required>
+        </div>
+
+        <div class="form-group">
+          <label for="c-obs">Observações</label>
+          <textarea id="c-obs" rows="3"></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="btn-cancelar-contrato">Cancelar</button>
+          <button type="submit" class="btn-primary">Salvar</button>
+        </div>
+      </form>
     </div>
   </div>
 
-  <script type="module">
-    import { db, auth } from "../firebase-config.js";
-    import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  <!-- Navegação Inferior Móvel -->
+  <nav class="bottom-nav">
+    <a href="/index.html" class="nav-item">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Dashboard</span>
+    </a>
+    <a href="/contratos.html" class="nav-item active">
+      <span class="nav-icon">📄</span>
+      <span class="nav-label">Contratos</span>
+    </a>
+    <a href="/projetos.html" class="nav-item">
+      <span class="nav-icon">📑</span>
+      <span class="nav-label">Projetos</span>
+    </a>
+    <a href="/tarefas.html" class="nav-item">
+      <span class="nav-icon">✅</span>
+      <span class="nav-label">Tarefas</span>
+    </a>
+    <a href="/configuracoes.html" class="nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Configurações</span>
+    </a>
+    <button type="button" class="nav-item btn-logout" id="btn-logout">
+      <span class="nav-icon">🚪</span>
+      <span class="nav-label">Sair</span>
+    </button>
+  </nav>
 
-    window.db = db;
-    window.contratosCache = {};
-    let idContratoEdicao = null;
-
-    window.fazerLogout = async () => await signOut(auth);
-
-    /* HELPERS */
-    function diasRestantes(timestamp) {
-      if (!timestamp) return null;
-      const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-      const data = timestamp.toDate(); data.setHours(0, 0, 0, 0);
-      return Math.round((data - hoje) / (1000 * 60 * 60 * 24));
-    }
-    function formatarData(timestamp) {
-      if (!timestamp) return "-";
-      return timestamp.toDate().toLocaleDateString("pt-BR");
-    }
-    function formatToDateInput(timestamp) {
-      if (!timestamp) return "";
-      const date = timestamp.toDate();
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-    function badgePorDias(dias) {
-      if (dias === null) return { classe: "success", texto: "Sem prazo" };
-      if (dias < 0) return { classe: "danger", texto: `Atrasado há ${Math.abs(dias)} dia(s)` };
-      if (dias <= 7) return { classe: "warning", texto: dias === 0 ? "Vence hoje" : `Vence em ${dias} dia(s)` };
-      return { classe: "success", texto: `Vence em ${dias} dia(s)` };
-    }
-    function escapeHtml(str) {
-      const div = document.createElement("div"); div.textContent = str ?? ""; return div.innerHTML;
-    }
-
-    /* LÓGICA DE CONTRATOS */
-    const contratosRef = query(collection(db, "contratos"), orderBy("data_vencimento", "asc"));
-
-    onSnapshot(contratosRef, (snap) => {
-      const list = document.getElementById("contratos-list");
-      document.getElementById("contratos-count").textContent = snap.size;
-      window.contratosCache = {};
-
-      if (snap.empty) {
-        list.innerHTML = '<div class="list-empty">Nenhum contrato cadastrado.</div>';
-        return;
-      }
-
-      list.innerHTML = "";
-      snap.forEach((docSnap) => {
-        const c = docSnap.data();
-        window.contratosCache[docSnap.id] = c;
-        const dias = diasRestantes(c.data_vencimento);
-        const badge = badgePorDias(dias);
-
-        const el = document.createElement("div");
-        el.className = "item";
-        el.innerHTML = `
-          <div style="position: absolute; top: 8px; right: 8px; display: flex; gap: 4px;">
-            <button class="del-btn" style="position: static;" onclick="editarContrato('${docSnap.id}')">✏️</button>
-            <button class="del-btn" style="position: static;" onclick="excluirContrato('${docSnap.id}')">✕</button>
-          </div>
-          <div class="item-title">${escapeHtml(c.titulo)}</div>
-          <div class="item-sub">${escapeHtml(c.orgao || "")} ${c.numero ? "· nº " + escapeHtml(c.numero) : ""}</div>
-          <div class="item-sub">Vencimento: ${formatarData(c.data_vencimento)}</div>
-          <div class="item-sub" style="margin-top: 6px; font-style: italic;">${escapeHtml(c.observacoes || "")}</div>
-          <span class="badge ${badge.classe}">${badge.texto}</span>
-        `;
-        list.appendChild(el);
-      });
-    });
-
-    window.abrirModalContrato = () => {
-      idContratoEdicao = null;
-      document.querySelectorAll("#modal-contrato input, #modal-contrato textarea").forEach(i => i.value = "");
-      document.getElementById("c-esfera").value = "Municipal";
-      document.getElementById("modal-contrato").classList.add("open");
-    };
-
-    window.editarContrato = (id) => {
-      idContratoEdicao = id;
-      const c = window.contratosCache[id];
-      document.getElementById("c-titulo").value = c.titulo || "";
-      document.getElementById("c-orgao").value = c.orgao || "";
-      document.getElementById("c-numero").value = c.numero || "";
-      document.getElementById("c-esfera").value = c.esfera || "Municipal";
-      document.getElementById("c-fornecedor").value = c.fornecedor || "";
-      document.getElementById("c-obs").value = c.observacoes || "";
-      document.getElementById("c-vencimento").value = formatToDateInput(c.data_vencimento);
-      document.getElementById("modal-contrato").classList.add("open");
-    };
-
-    window.salvarContrato = async () => {
-      const titulo = document.getElementById("c-titulo").value.trim();
-      const vencimentoStr = document.getElementById("c-vencimento").value;
-
-      if (!titulo || !vencimentoStr) { 
-        alert("Preencha ao menos o título e a data de vencimento."); 
-        return; 
-      }
-
-      // 1. Prepara os dados
-      const dadosParaSalvar = {
-        titulo,
-        orgao: document.getElementById("c-orgao").value.trim(),
-        numero: document.getElementById("c-numero").value.trim(),
-        esfera: document.getElementById("c-esfera").value,
-        fornecedor: document.getElementById("c-fornecedor").value.trim(),
-        data_vencimento: Timestamp.fromDate(new Date(vencimentoStr + "T00:00:00")),
-        observacoes: document.getElementById("c-obs").value.trim()
-      };
-
-      const eraEdicao = !!idContratoEdicao;
-      const idAtual = idContratoEdicao;
-
-      // 2. FECHA E LIMPA O MODAL IMEDIATAMENTE (Sensação de rapidez máxima)
-      document.getElementById("modal-contrato").classList.remove("open");
-      document.querySelectorAll("#modal-contrato input, #modal-contrato textarea").forEach(i => i.value = "");
-      document.getElementById("c-esfera").value = "Municipal";
-      idContratoEdicao = null;
-
-      // 3. Envia os dados para o Firebase em segundo plano
-      try {
-        if (eraEdicao) {
-          await updateDoc(doc(db, "contratos", idAtual), dadosParaSalvar);
-        } else {
-          dadosParaSalvar.criadoEm = serverTimestamp();
-          await addDoc(collection(db, "contratos"), dadosParaSalvar);
-        }
-      } catch (error) {
-        console.error("Erro ao guardar contrato no Firebase:", error);
-        alert("Ocorreu um erro ao gravar os dados. Verifica a tua ligação ou as permissões do Firebase.");
-      }
-    };
-
-    window.excluirContrato = async (id) => {
-      if (confirm("Excluir este contrato?")) await deleteDoc(doc(db, "contratos", id));
-    };
-
-    window.fecharModal = (id) => document.getElementById(id).classList.remove("open");
-  </script>
+  <!-- Script Principal Unificado -->
+  <script type="module" src="/js/script.js"></script>
 </body>
 </html>

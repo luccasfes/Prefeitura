@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Login - GovDocs</title>
-  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="style.css">
   <style>
     body { display: flex; align-items: center; justify-content: center; background: var(--sidebar-bg); }
   </style>
@@ -19,7 +19,7 @@
   </div>
 
   <script type="module">
-    import { auth } from "../firebase-config.js";
+    import { auth } from "./js/firebase-config.js";
     import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     document.getElementById("btn-entrar").addEventListener("click", async () => {
