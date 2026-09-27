@@ -3,10 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Projetos - GovDocs</title>
-  <link rel="manifest" href="./js/manifest.json">
-  <meta name="theme-color" content="#10233f">
-  <link rel="stylesheet" href="style.css">
+  <title>Projetos — GovDocs</title>
+  <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
 
@@ -27,54 +25,35 @@
   <main class="main">
     <header>
       <div>
-        <h2>Próximos Passos e Projetos</h2>
-        <p>Ações prioritárias das emendas</p>
+        <h2>Emendas e Projetos</h2>
+        <p>Acompanhamento de obras e ações estruturais</p>
       </div>
-      <button class="btn-add" onclick="abrirModalProjeto()">+ Novo projeto</button>
     </header>
 
-    <section class="card" style="min-height: 70vh;">
+    <section class="card" style="max-width: 800px;">
       <div class="card-head">
-        <h3>Lista de Projetos</h3>
+        <h3>Andamento dos Projetos</h3>
         <span class="count" id="projetos-count">0</span>
       </div>
-      <div class="list" id="projetos-list" style="max-height: 100%;">
+      <div class="list" id="projetos-list" style="max-height: 600px;">
         <div class="list-empty">Carregando projetos...</div>
       </div>
+      <button class="btn-add" onclick="abrirModalProjeto()">+ Novo projeto</button>
     </section>
   </main>
 
-  <!-- MODAL: NOVO PROJETO -->
+  <!-- MODAL DE PROJETO (Cole exatamente o modal-projeto do seu index aqui) -->
   <div class="modal-overlay" id="modal-projeto">
     <div class="modal">
-      <h3>Projeto / Próxima Ação</h3>
-      <div class="field">
-        <label>Título</label>
-        <input type="text" id="p-titulo" placeholder="Ex: Emenda parlamentar - reforma da UBS">
-      </div>
-      <div class="field">
-        <label>Descrição detalhada</label>
-        <textarea id="p-descricao" rows="2"></textarea>
-      </div>
-      <div class="field">
-        <label>Responsável</label>
-        <input type="text" id="p-responsavel" placeholder="Ex: João Silva">
-      </div>
-      <div class="field">
-        <label>Próxima Ação (Passo a passo)</label>
-        <input type="text" id="p-proxima-acao" placeholder="Ex: Enviar prestação de contas">
-      </div>
-      <div class="field">
-        <label>Prazo da Próxima Ação</label>
-        <input type="date" id="p-prazo">
-      </div>
+      <h3>Novo Projeto</h3>
+      <div class="field"><label>Título</label><input type="text" id="p-titulo"></div>
+      <div class="field"><label>Descrição</label><textarea id="p-descricao" rows="2"></textarea></div>
+      <div class="field"><label>Responsável</label><input type="text" id="p-responsavel"></div>
+      <div class="field"><label>Próxima Ação</label><input type="text" id="p-proxima-acao"></div>
+      <div class="field"><label>Prazo da Próxima Ação</label><input type="date" id="p-prazo"></div>
       <div class="field">
         <label>Prioridade</label>
-        <select id="p-prioridade">
-          <option value="Alta">Alta</option>
-          <option value="Média" selected>Média</option>
-          <option value="Baixa">Baixa</option>
-        </select>
+        <select id="p-prioridade"><option value="Alta">Alta</option><option value="Média" selected>Média</option><option value="Baixa">Baixa</option></select>
       </div>
       <div class="modal-actions">
         <button class="btn-secondary" onclick="fecharModal('modal-projeto')">Cancelar</button>
@@ -83,127 +62,6 @@
     </div>
   </div>
 
-  <script type="module">
-    import { db, auth } from "./js/firebase-config.js";
-    import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-    window.db = db;
-    window.projetosCache = {};
-    let idProjetoEdicao = null;
-
-    window.fazerLogout = async () => await signOut(auth);
-
-    /* HELPERS */
-    function diasRestantes(timestamp) {
-      if (!timestamp) return null;
-      const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-      const data = timestamp.toDate(); data.setHours(0, 0, 0, 0);
-      return Math.round((data - hoje) / (1000 * 60 * 60 * 24));
-    }
-    function formatToDateInput(timestamp) {
-      if (!timestamp) return "";
-      const date = timestamp.toDate();
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-    function badgePorDias(dias) {
-      if (dias === null) return { classe: "success", texto: "Sem prazo" };
-      if (dias < 0) return { classe: "danger", texto: `Atrasado há ${Math.abs(dias)} dia(s)` };
-      if (dias <= 7) return { classe: "warning", texto: dias === 0 ? "Vence hoje" : `Vence em ${dias} dia(s)` };
-      return { classe: "success", texto: `Vence em ${dias} dia(s)` };
-    }
-    function escapeHtml(str) {
-      const div = document.createElement("div"); div.textContent = str ?? ""; return div.innerHTML;
-    }
-
-    /* LÓGICA DE PROJETOS */
-    const projetosRef = query(collection(db, "projetos"), orderBy("data_prazo", "asc"));
-
-    onSnapshot(projetosRef, (snap) => {
-      const list = document.getElementById("projetos-list");
-      document.getElementById("projetos-count").textContent = snap.size;
-      window.projetosCache = {};
-
-      if (snap.empty) {
-        list.innerHTML = '<div class="list-empty">Nenhum projeto cadastrado.</div>';
-        return;
-      }
-
-      list.innerHTML = "";
-      snap.forEach((docSnap) => {
-        const p = docSnap.data();
-        window.projetosCache[docSnap.id] = p;
-        const dias = diasRestantes(p.data_prazo);
-        const badge = badgePorDias(dias);
-
-        const el = document.createElement("div");
-        el.className = "item";
-        el.innerHTML = `
-          <div style="position: absolute; top: 8px; right: 8px; display: flex; gap: 4px;">
-            <button class="del-btn" style="position: static;" onclick="editarProjeto('${docSnap.id}')">✏️</button>
-            <button class="del-btn" style="position: static;" onclick="excluirProjeto('${docSnap.id}')">✕</button>
-          </div>
-          <div class="item-title">${escapeHtml(p.titulo)}</div>
-          <div class="item-sub" style="margin-bottom: 4px;"><strong>Próxima ação:</strong> ${escapeHtml(p.proxima_acao || "-")}</div>
-          <div class="item-sub">${escapeHtml(p.descricao || "")}</div>
-          <div class="item-sub" style="margin-top: 6px;">Responsável: ${escapeHtml(p.responsavel || "-")} · Prioridade: ${escapeHtml(p.prioridade || "-")}</div>
-          <span class="badge ${badge.classe}">${badge.texto}</span>
-        `;
-        list.appendChild(el);
-      });
-    });
-
-    window.abrirModalProjeto = () => {
-      idProjetoEdicao = null;
-      document.querySelectorAll("#modal-projeto input, #modal-projeto textarea").forEach(i => i.value = "");
-      document.getElementById("p-prioridade").value = "Média";
-      document.getElementById("modal-projeto").classList.add("open");
-    };
-
-    window.editarProjeto = (id) => {
-      idProjetoEdicao = id;
-      const p = window.projetosCache[id];
-      document.getElementById("p-titulo").value = p.titulo || "";
-      document.getElementById("p-descricao").value = p.descricao || "";
-      document.getElementById("p-responsavel").value = p.responsavel || "";
-      document.getElementById("p-proxima-acao").value = p.proxima_acao || "";
-      document.getElementById("p-prioridade").value = p.prioridade || "Média";
-      document.getElementById("p-prazo").value = formatToDateInput(p.data_prazo);
-      document.getElementById("modal-projeto").classList.add("open");
-    };
-
-    window.salvarProjeto = async () => {
-      const titulo = document.getElementById("p-titulo").value.trim();
-      const prazoStr = document.getElementById("p-prazo").value;
-
-      if (!titulo || !prazoStr) { alert("Preencha ao menos o título e o prazo da próxima ação."); return; }
-
-      const dadosParaSalvar = {
-        titulo,
-        descricao: document.getElementById("p-descricao").value.trim(),
-        responsavel: document.getElementById("p-responsavel").value.trim(),
-        proxima_acao: document.getElementById("p-proxima-acao").value.trim(),
-        data_prazo: Timestamp.fromDate(new Date(prazoStr + "T00:00:00")),
-        prioridade: document.getElementById("p-prioridade").value
-      };
-
-      if (idProjetoEdicao) {
-        await updateDoc(doc(db, "projetos", idProjetoEdicao), dadosParaSalvar);
-      } else {
-        dadosParaSalvar.criadoEm = serverTimestamp();
-        await addDoc(collection(db, "projetos"), dadosParaSalvar);
-      }
-      window.fecharModal("modal-projeto");
-    };
-
-    window.excluirProjeto = async (id) => {
-      if (confirm("Excluir este projeto?")) await deleteDoc(doc(db, "projetos", id));
-    };
-
-    window.fecharModal = (id) => document.getElementById(id).classList.remove("open");
-  </script>
+  <script type="module" src="./js/script.js"></script>
 </body>
 </html>

@@ -3,10 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Configurações - GovDocs</title>
-  <link rel="manifest" href="./js/manifest.json">
-  <meta name="theme-color" content="#10233f">
-  <link rel="stylesheet" href="style.css">
+  <title>Configurações — GovDocs</title>
+  <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
 
@@ -28,86 +26,66 @@
     <header>
       <div>
         <h2>Configurações</h2>
-        <p>Ajustes do sistema e perfil de utilizador</p>
+        <p>Ajustes do sistema e gestão da tua conta</p>
       </div>
     </header>
 
-    <!-- Usamos uma grid de 1 coluna limitada a 600px para ficar elegante num ecrã grande -->
-    <div class="grid" style="grid-template-columns: 1fr; max-width: 600px;">
-      
-      <!-- CARD PERFIL -->
-      <section class="card" style="min-height: auto;">
+    <div class="grid">
+      <!-- Painel de Conta -->
+      <section class="card" style="max-width: 500px;">
         <div class="card-head">
-          <h3>Perfil da Conta</h3>
+          <h3>Perfil e Segurança</h3>
         </div>
-        <div class="field" style="margin-top: 10px;">
-          <label>Email de Acesso</label>
-          <input type="text" id="user-email" disabled value="A carregar dados..." style="background-color: var(--bg); cursor: not-allowed;">
-          <small style="color: var(--muted); font-size: 11px; margin-top: 4px;">Este email é gerido através da consola do Firebase.</small>
-        </div>
-        
-        <div style="margin-top: 24px; display: flex; gap: 10px;">
-          <button class="btn-secondary" onclick="fazerLogout()" style="color: var(--danger); border-color: var(--danger); background: transparent;">
-            Sair da Conta (Logout)
-          </button>
+        <div style="padding: 20px;">
+          <div class="field">
+            <label>Estado da Ligação</label>
+            <input type="text" value="Sessão Autenticada e Segura" disabled style="background-color: #f1f5f9; color: #10b981; font-weight: 600; text-align: center;">
+          </div>
+          
+          <div class="field" style="margin-top: 24px;">
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px; text-align: center;">
+              Para proteger os dados municipais, encerra a tua sessão sempre que te afastares do computador.
+            </p>
+            <button class="btn-add" style="background: var(--danger);" onclick="fazerLogout()">Encerrar Sessão Seguramente</button>
+          </div>
         </div>
       </section>
 
-      <!-- CARD PREFERÊNCIAS -->
-      <section class="card" style="min-height: auto;">
+      <!-- Informações do Sistema -->
+      <section class="card" style="max-width: 500px;">
         <div class="card-head">
-          <h3>Preferências Locais</h3>
+          <h3>Sobre o GovDocs</h3>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">
-          <label class="tarefa-row" style="cursor: pointer;">
-            <input type="checkbox" checked>
-            <span class="tarefa-text">Receber alertas de prazos a vencer (Em breve)</span>
-          </label>
-          <label class="tarefa-row" style="cursor: pointer;">
-            <input type="checkbox" id="btn-tema" disabled>
-            <span class="tarefa-text" style="color: var(--muted);">Modo Escuro (Em desenvolvimento)</span>
-          </label>
+        <div style="padding: 20px; color: #475569; font-size: 0.95rem; line-height: 1.6;">
+          <p><strong>Versão:</strong> 2.0.0 (Build Estável)</p>
+          <p><strong>Base de Dados:</strong> Firebase Cloud Firestore (southamerica-east1)</p>
+          <p><strong>Autenticação:</strong> Ativa e Obrigatória</p>
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+            <p style="font-size: 0.85rem; color: #94a3b8;">
+              Desenvolvido para centralizar a gestão de emendas parlamentares, contratos vigentes e tarefas diárias da administração pública de forma rápida e segura.
+            </p>
+          </div>
         </div>
       </section>
-
-      <!-- CARD SOBRE -->
-      <section class="card" style="min-height: auto; text-align: center; padding: 30px;">
-        <h3 style="color: var(--sidebar-bg); margin-bottom: 8px;">GovDocs</h3>
-        <p style="font-size: 13px; color: var(--muted);">Versão 1.0.0 (MVP)<br>Painel de Gestão de Emendas e Contratos</p>
-      </section>
-
     </div>
+
   </main>
+<!-- CARD DE EXPORTAÇÃO DE DADOS -->
+<section class="card" style="max-width: 500px;">
+  <div class="card-head">
+    <h3>Transparência e Exportação</h3>
+  </div>
+  <div style="padding: 20px;">
+    <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 16px;">
+      Gere pacotes de dados estruturados para prestação de contas ao TCE-MG ou envio alternativo à Prefeitura.
+    </p>
+    <div style="display: flex; gap: 12px;">
+      <button type="button" class="btn-primary" onclick="exportarJSON()">📥 Exportar JSON</button>
+      <button type="button" class="btn-primary" style="background: #0f172a;" onclick="exportarXML()">📥 Exportar XML</button>
+    </div>
+  </div>
+</section>
 
-  <script type="module">
-    import { auth } from "../firebase-config.js";
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-    // Função de Logout Global
-    window.fazerLogout = async () => {
-      if (confirm("Tem a certeza que deseja sair do sistema?")) {
-        await signOut(auth);
-      }
-    };
-
-    // Lê o estado atual da autenticação para mostrar o email da Marlene na tela
-    onAuthStateChanged(auth, (user) => {
-      const emailInput = document.getElementById("user-email");
-      if (user) {
-        emailInput.value = user.email;
-      } else {
-        emailInput.value = "Nenhum utilizador logado.";
-      }
-    });
-
-    /* ---------- PWA ---------- */
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("sw.js").catch((err) => {
-          console.warn("Falha ao registrar o service worker:", err);
-        });
-      });
-    }
-  </script>
+  <script type="module" src="./js/script.js"></script>
 </body>
 </html>

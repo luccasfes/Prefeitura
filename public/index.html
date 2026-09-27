@@ -2,156 +2,110 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GovDocs - Painel Geral</title>
-
-  <!-- Estilos e PWA -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Dashboard — GovDocs</title>
   <link rel="stylesheet" href="./css/style.css">
-  <link rel="manifest" href="./manifest.json">
-  <link rel="icon" href="./imagens/icon-192.png" type="image/png">
-  <link rel="apple-touch-icon" href="./imagens/icon-192.png">
-  <meta name="theme-color" content="#0056b3">
 </head>
 <body>
 
-  <!-- Topo do Sistema -->
-  <header class="app-header">
-    <div class="header-container">
-      <span class="logo-title">GovDocs</span>
-    </div>
-  </header>
+  <div class="mobile-topbar">GovDocs</div>
 
-  <!-- Conteúdo Principal -->
-  <main class="main-container">
-    <section class="section-title">
-      <h2>Painel Geral</h2>
-      <p>Prazos, vigências e tarefas centralizados em um só lugar</p>
-    </section>
+  <aside class="sidebar">
+    <h1>GovDocs</h1>
+    <nav>
+      <a href="index.html" class="active">📊 Dashboard</a>
+      <a href="contratos.html">📄 Contratos</a>
+      <a href="projetos.html">🏗️ Projetos</a>
+      <a href="tarefas.html">✅ Tarefas</a>
+      <a href="configuracoes.html">⚙️ Configurações</a>
+      <a href="#" onclick="fazerLogout()" style="color: var(--danger); margin-top: 20px;">🚪 Sair</a>
+    </nav>
+  </aside>
 
-    <!-- Card: Contratos e Prazos a Vencer -->
-    <div class="dashboard-card">
-      <div class="card-header">
-        <h3>Contratos e Prazos a Vencer</h3>
-        <span class="counter-badge" id="badge-contratos">0</span>
+  <main class="main">
+    <header>
+      <div>
+        <h2>Painel Geral</h2>
+        <p>Visão completa do município</p>
       </div>
-      <div class="card-body" id="lista-contratos">
-        <p class="placeholder-text">Carregando contratos...</p>
-      </div>
-      <div class="card-footer">
-        <button type="button" class="btn-primary" id="btn-novo-contrato">+ Novo contrato</button>
-      </div>
-    </div>
+    </header>
 
-    <!-- Card: Próximos Passos / Projetos -->
-    <div class="dashboard-card">
-      <div class="card-header">
-        <h3>Próximos Passos / Projetos</h3>
-        <span class="counter-badge" id="badge-projetos">0</span>
-      </div>
-      <div class="card-body" id="lista-projetos">
-        <p class="placeholder-text">Carregando projetos...</p>
-      </div>
-      <div class="card-footer">
-        <button type="button" class="btn-primary" id="btn-novo-projeto">+ Novo projeto</button>
-      </div>
-    </div>
+    <div class="grid">
+      <!-- Aqui vão os 3 cards exatos que você mandou (Contratos, Projetos, Tarefas) -->
+      <section class="card">
+        <div class="card-head">
+          <h3>Contratos a Vencer</h3>
+          <span class="count" id="contratos-count">0</span>
+        </div>
+        <div class="list" id="contratos-list"><div class="list-empty">Carregando...</div></div>
+        <button class="btn-add" onclick="abrirModalContrato()">+ Novo contrato</button>
+      </section>
 
-    <!-- Card: Tarefas Diárias -->
-    <div class="dashboard-card">
-      <div class="card-header">
-        <h3>Tarefas Diárias</h3>
-        <span class="counter-badge" id="badge-tarefas">0</span>
-      </div>
-      <div class="card-body" id="lista-tarefas">
-        <p class="placeholder-text">Carregando tarefas...</p>
-      </div>
-      <div class="card-footer">
-        <button type="button" class="btn-primary" id="btn-nova-tarefa">+ Nova tarefa</button>
-      </div>
+      <section class="card">
+        <div class="card-head">
+          <h3>Projetos</h3>
+          <span class="count" id="projetos-count">0</span>
+        </div>
+        <div class="list" id="projetos-list"><div class="list-empty">Carregando...</div></div>
+        <button class="btn-add" onclick="abrirModalProjeto()">+ Novo projeto</button>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h3>Tarefas</h3>
+          <span class="count" id="tarefas-count">0</span>
+        </div>
+        <div class="list" id="tarefas-list"><div class="list-empty">Carregando...</div></div>
+        <div class="add-tarefa">
+          <input type="text" id="nova-tarefa-input" placeholder="Nova tarefa...">
+          <button class="btn-add" onclick="adicionarTarefa()">+</button>
+        </div>
+      </section>
     </div>
   </main>
 
-  <!-- Modal de Contrato -->
+  <!-- MODAL DE CONTRATO -->
   <div class="modal-overlay" id="modal-contrato">
-    <div class="modal-content">
-      <h3 id="modal-contrato-titulo">Novo Contrato</h3>
-      <form id="form-contrato">
-        <div class="form-group">
-          <label for="c-titulo">Título / Objeto</label>
-          <input type="text" id="c-titulo" placeholder="Ex: Fornecimento de merenda escolar" required>
-        </div>
-
-        <div class="form-group">
-          <label for="c-orgao">Órgão / Secretaria</label>
-          <input type="text" id="c-orgao" placeholder="Ex: Secretaria de Educação">
-        </div>
-
-        <div class="form-group">
-          <label for="c-numero">Nº do Contrato</label>
-          <input type="text" id="c-numero" placeholder="Ex: 045/2026">
-        </div>
-
-        <div class="form-group">
-          <label for="c-esfera">Esfera</label>
-          <select id="c-esfera">
-            <option value="Municipal">Municipal</option>
-            <option value="Estadual">Estadual</option>
-            <option value="Federal">Federal</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="c-fornecedor">Fornecedor</label>
-          <input type="text" id="c-fornecedor" placeholder="Ex: Empresa XYZ Ltda">
-        </div>
-
-        <div class="form-group">
-          <label for="c-vencimento">Data de Vencimento</label>
-          <input type="date" id="c-vencimento" required>
-        </div>
-
-        <div class="form-group">
-          <label for="c-obs">Observações</label>
-          <textarea id="c-obs" rows="3"></textarea>
-        </div>
-
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" id="btn-cancelar-contrato">Cancelar</button>
-          <button type="submit" class="btn-primary">Salvar</button>
-        </div>
-      </form>
+    <div class="modal">
+      <h3>Novo Contrato</h3>
+      <div class="field"><label>Título / Objeto</label><input type="text" id="c-titulo"></div>
+      <div class="field"><label>Órgão / Secretaria</label><input type="text" id="c-orgao"></div>
+      <div class="field"><label>Nº do Contrato</label><input type="text" id="c-numero"></div>
+      <div class="field">
+        <label>Esfera</label>
+        <select id="c-esfera"><option value="Federal">Federal</option><option value="Estadual">Estadual</option><option value="Municipal" selected>Municipal</option></select>
+      </div>
+      <div class="field"><label>Fornecedor</label><input type="text" id="c-fornecedor"></div>
+      <div class="field"><label>Data de Vencimento</label><input type="date" id="c-vencimento"></div>
+      <div class="field"><label>Observações</label><textarea id="c-obs" rows="2"></textarea></div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="fecharModal('modal-contrato')">Cancelar</button>
+        <button class="btn-primary" onclick="salvarContrato()">Salvar</button>
+      </div>
     </div>
   </div>
 
-  <!-- Navegação Inferior Móvel -->
-  <nav class="bottom-nav">
-    <a href="/index.html" class="nav-item active">
-      <span class="nav-icon">📊</span>
-      <span class="nav-label">Dashboard</span>
-    </a>
-    <a href="/contratos.html" class="nav-item">
-      <span class="nav-icon">📄</span>
-      <span class="nav-label">Contratos</span>
-    </a>
-    <a href="/projetos.html" class="nav-item">
-      <span class="nav-icon">📑</span>
-      <span class="nav-label">Projetos</span>
-    </a>
-    <a href="/tarefas.html" class="nav-item">
-      <span class="nav-icon">✅</span>
-      <span class="nav-label">Tarefas</span>
-    </a>
-    <a href="/configuracoes.html" class="nav-item">
-      <span class="nav-icon">⚙️</span>
-      <span class="nav-label">Configurações</span>
-    </a>
-    <button type="button" class="nav-item btn-logout" id="btn-logout">
-      <span class="nav-icon">🚪</span>
-      <span class="nav-label">Sair</span>
-    </button>
-  </nav>
+  <!-- MODAL DE PROJETO -->
+  <div class="modal-overlay" id="modal-projeto">
+    <div class="modal">
+      <h3>Novo Projeto</h3>
+      <div class="field"><label>Título</label><input type="text" id="p-titulo"></div>
+      <div class="field"><label>Descrição</label><textarea id="p-descricao" rows="2"></textarea></div>
+      <div class="field"><label>Responsável</label><input type="text" id="p-responsavel"></div>
+      <div class="field"><label>Próxima Ação</label><input type="text" id="p-proxima-acao"></div>
+      <div class="field"><label>Prazo da Próxima Ação</label><input type="date" id="p-prazo"></div>
+      <div class="field">
+        <label>Prioridade</label>
+        <select id="p-prioridade"><option value="Alta">Alta</option><option value="Média" selected>Média</option><option value="Baixa">Baixa</option></select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="fecharModal('modal-projeto')">Cancelar</button>
+        <button class="btn-primary" onclick="salvarProjeto()">Salvar</button>
+      </div>
+    </div>
+  </div>
 
-  <!-- Script Principal Unificado -->
-  <script type="module" src="/js/script.js"></script>
+  
+  <script type="module" src="./js/script.js"></script>
 </body>
 </html>

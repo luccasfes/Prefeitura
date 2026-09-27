@@ -2,35 +2,25 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Login - GovDocs</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body { display: flex; align-items: center; justify-content: center; background: var(--sidebar-bg); }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Login — GovDocs</title>
+  <link rel="stylesheet" href="./css/style.css">
 </head>
-<body>
-  <div class="login-box">
-    <h2>Acesso Restrito</h2>
-    <p>Insira suas credenciais do GovDocs</p>
-    <input type="email" id="login-email" placeholder="Email">
-    <input type="password" id="login-senha" placeholder="Senha">
-    <button id="btn-entrar">Entrar no Sistema</button>
-    <div id="login-erro" style="color: red; display: none; margin-top: 10px;">Credenciais inválidas.</div>
+<body style="align-items: center; justify-content: center; background: var(--sidebar-bg);">
+
+  <div class="card" style="width: 100%; max-width: 400px; padding: 32px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+    <h1 style="text-align: center; color: var(--primary); margin-bottom: 24px;">GovDocs</h1>
+    <div class="field">
+      <label>E-mail</label>
+      <input type="email" id="email" placeholder="admin@prefeitura.gov.br">
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" id="senha" placeholder="••••••••">
+    </div>
+    <button class="btn-primary" onclick="fazerLogin()" style="width: 100%; margin-top: 16px;">Entrar no Sistema</button>
   </div>
 
-  <script type="module">
-    import { auth } from "./js/firebase-config.js";
-    import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-    document.getElementById("btn-entrar").addEventListener("click", async () => {
-      const email = document.getElementById("login-email").value;
-      const senha = document.getElementById("login-senha").value;
-      try {
-        await signInWithEmailAndPassword(auth, email, senha);
-      } catch (error) {
-        document.getElementById("login-erro").style.display = "block";
-      }
-    });
-  </script>
+  <script type="module" src="./js/script.js"></script>
 </body>
 </html>
