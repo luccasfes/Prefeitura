@@ -7,6 +7,7 @@ window.db = db;
 // Memória temporária para carregar os dados rapidamente ao clicar em "Editar"
 window.contratosCache = {};
 window.projetosCache = {};
+window.todosContratosCacheList = [];
 
 // Variáveis de controlo de edição
 let idContratoEdicao = null;
@@ -103,23 +104,34 @@ function limparCamposModal(modalId) {
 const contratosRef = query(collection(db, "contratos"), orderBy("data_vencimento", "asc"));
 
 onSnapshot(contratosRef, (snap) => {
-  const list = document.getElementById("contratos-list");
-  if (!list) return; // Trava de segurança para páginas que não têm esta lista
-
   const countEl = document.getElementById("contratos-count");
   if (countEl) countEl.textContent = snap.size;
   
   window.contratosCache = {};
+  window.todosContratosCacheList = [];
 
-  if (snap.empty) {
-    list.innerHTML = '<div class="list-empty">Nenhum contrato cadastrado.</div>';
+  snap.forEach((docSnap) => {
+    const c = docSnap.data();
+    window.contratosCache[docSnap.id] = c;
+    window.todosContratosCacheList.push({ id: docSnap.id, ...c });
+  });
+
+  // Executa a função de renderização com os filtros atuais
+  renderizarContratos(window.todosContratosCacheList);
+});
+
+// Função para renderizar a lista na tela com base na busca
+window.renderizarContratos = function(lista) {
+  const list = document.getElementById("contratos-list");
+  if (!list) return;
+
+  if (lista.length === 0) {
+    list.innerHTML = '<div class="list-empty">Nenhum contrato encontrado.</div>';
     return;
   }
 
   list.innerHTML = "";
-  snap.forEach((docSnap) => {
-    const c = docSnap.data();
-    window.contratosCache[docSnap.id] = c;
+  lista.forEach((c) => {
     const dias = diasRestantes(c.data_vencimento);
     const badge = badgePorDias(dias);
 
@@ -127,8 +139,8 @@ onSnapshot(contratosRef, (snap) => {
     el.className = "item";
     el.innerHTML = `
       <div class="action-buttons">
-        <button class="del-btn" onclick="editarContrato('${docSnap.id}')">✏️</button>
-        <button class="del-btn" style="color: var(--danger);" onclick="excluirContrato('${docSnap.id}')">✕</button>
+        <button type="button" class="del-btn" onclick="editarContrato('${c.id}')">✏️</button>
+        <button type="button" class="del-btn" style="color: var(--danger);" onclick="excluirContrato('${c.id}')">✕</button>
       </div>
       <div class="item-title">${escapeHtml(c.titulo)}</div>
       <div class="item-sub">${escapeHtml(c.orgao || "")} ${c.numero ? "· nº " + escapeHtml(c.numero) : ""}</div>
@@ -137,7 +149,29 @@ onSnapshot(contratosRef, (snap) => {
     `;
     list.appendChild(el);
   });
-});
+};
+
+// Função acionada ao digitar na barra de pesquisa ou mudar o select
+window.filtrarContratos = function() {
+  const termo = document.getElementById("filtro-busca")?.value.toLowerCase() || "";
+  const statusFiltro = document.getElementById("filtro-status")?.value || "todos";
+
+  const filtrados = window.todosContratosCacheList.filter(c => {
+    const textoCompleto = `${c.titulo || ""} ${c.orgao || ""} ${c.fornecedor || ""} ${c.numero || ""}`.toLowerCase();
+    const correspondeBusca = textoCompleto.includes(termo);
+
+    const dias = diasRestantes(c.data_vencimento);
+    let correspondeStatus = true;
+
+    if (statusFiltro === "atrasado") correspondeStatus = (dias !== null && dias < 0);
+    if (statusFiltro === "vence-hoje") correspondeStatus = (dias === 0);
+    if (statusFiltro === "ok") correspondeStatus = (dias === null || dias > 0);
+
+    return correspondeBusca && correspondeStatus;
+  });
+
+  renderizarContratos(filtrados);
+};
 
 window.editarContrato = (id) => {
   idContratoEdicao = id;
@@ -160,7 +194,7 @@ window.salvarContrato = async function () {
   const vencimentoStr = document.getElementById("c-vencimento").value;
 
   if (!titulo || !vencimentoStr) {
-    alert("Preencha ao menos o título e a data de vencimento.");
+    mostrarToast("Preencha ao menos o título e a data.", "error"); // <-- Aqi se faltar dados
     return;
   }
 
@@ -177,15 +211,17 @@ window.salvarContrato = async function () {
   try {
     if (idContratoEdicao) {
       await updateDoc(doc(db, "contratos", idContratoEdicao), dadosParaSalvar);
+      mostrarToast("Contrato atualizado com sucesso!"); // <-- AQUI (Edição)
     } else {
       dadosParaSalvar.criadoEm = serverTimestamp();
       await addDoc(collection(db, "contratos"), dadosParaSalvar);
+      mostrarToast("Contrato salvo com sucesso!"); // <-- AQUI (Novo registo)
     }
 
     window.fecharModal("modal-contrato");
   } catch (erro) {
     console.error("Erro ao salvar contrato:", erro);
-    alert("Erro: " + erro.message);
+    mostrarToast("Erro ao salvar contrato.", "error");
   }
 };
 
@@ -271,15 +307,17 @@ window.salvarProjeto = async function () {
   try {
     if (idProjetoEdicao) {
       await updateDoc(doc(db, "projetos", idProjetoEdicao), dadosParaSalvar);
+      mostrarToast("Projeto atualizado com sucesso!"); // <-- AQUI
     } else {
       dadosParaSalvar.criadoEm = serverTimestamp();
       await addDoc(collection(db, "projetos"), dadosParaSalvar);
+      mostrarToast("Projeto salvo com sucesso!"); // <-- AQUI
     }
 
     window.fecharModal("modal-projeto");
   } catch (erro) {
     console.error("Erro ao salvar projeto:", erro);
-    alert("Erro: " + erro.message);
+    mostrarToast("Erro ao salvar projeto.", "error");
   }
 };
 
@@ -537,4 +575,56 @@ window.exportarPDF = async function() {
     console.error("Erro ao exportar PDF:", erro);
     alert("Não foi possível gerar o ficheiro PDF.");
   }
+};
+
+/* ---------- FEEDBACK VISUAL (TOAST & MODAL CUSTOMIZADO) ---------- */
+
+window.mostrarToast = function(mensagem, tipo = 'success') {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${tipo}`;
+  toast.innerHTML = `
+    <span style="font-size: 1.1rem;">${tipo === 'success' ? '✅' : '⚠️'}</span>
+    <span style="flex: 1;">${escapeHtml(mensagem)}</span>
+  `;
+  
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+};
+
+window.mostrarConfirmacao = function(titulo, mensagem, onConfirmar) {
+  const oldModal = document.getElementById('custom-confirm-modal');
+  if (oldModal) oldModal.remove();
+
+  const modalHtml = `
+    <div class="modal-overlay open" id="custom-confirm-modal" style="display: flex;">
+      <div class="modal" style="max-width: 400px; text-align: center;">
+        <h3 style="color: var(--danger); margin-bottom: 12px;">${escapeHtml(titulo)}</h3>
+        <p style="color: #475569; font-size: 0.95rem; margin-bottom: 20px; line-height: 1.5;">${escapeHtml(mensagem)}</p>
+        <div class="modal-actions" style="justify-content: center; gap: 10px;">
+          <button type="button" class="btn-secondary" id="btn-cancel-confirm">Cancelar</button>
+          <button type="button" class="btn-primary" style="background: var(--danger);" id="btn-ok-confirm">Sim, Excluir</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+  document.getElementById('btn-cancel-confirm').onclick = () => {
+    document.getElementById('custom-confirm-modal').remove();
+  };
+
+  document.getElementById('btn-ok-confirm').onclick = () => {
+    document.getElementById('custom-confirm-modal').remove();
+    onConfirmar();
+  };
 };

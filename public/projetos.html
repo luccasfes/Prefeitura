@@ -30,6 +30,17 @@
       </div>
     </header>
 
+    <!-- Barra de Pesquisa e Filtros -->
+<div style="margin-bottom: 16px; display: flex; gap: 10px; flex-wrap: wrap;">
+  <input type="text" id="filtro-busca" placeholder="🔍 Pesquisar por título, órgão ou fornecedor..." oninput="filtrarContratos()" style="flex: 1; min-width: 200px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem;">
+  <select id="filtro-status" onchange="filtrarContratos()" style="padding: 10px 14px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; background: #fff;">
+    <option value="todos">Todos os prazos</option>
+    <option value="atrasado">Atrasados</option>
+    <option value="vence-hoje">Vencem Hoje</option>
+    <option value="ok">No Prazo</option>
+  </select>
+</div>
+
     <section class="card" style="max-width: 800px;">
       <div class="card-head">
         <h3>Andamento dos Projetos</h3>
