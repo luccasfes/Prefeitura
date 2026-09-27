@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Configurações — GovDocs</title>
   <link rel="stylesheet" href="./css/style.css">
+
+  <!-- Bibliotecas para exportação em Excel e PDF -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
@@ -26,7 +31,7 @@
     <header>
       <div>
         <h2>Configurações</h2>
-        <p>Ajustes do sistema e gestão da tua conta</p>
+        <p>Ajustes do sistema, relatórios e gestão da tua conta</p>
       </div>
     </header>
 
@@ -46,7 +51,23 @@
             <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px; text-align: center;">
               Para proteger os dados municipais, encerra a tua sessão sempre que te afastares do computador.
             </p>
-            <button class="btn-add" style="background: var(--danger);" onclick="fazerLogout()">Encerrar Sessão Seguramente</button>
+            <button type="button" class="btn-add" style="background: var(--danger);" onclick="fazerLogout()">Encerrar Sessão Seguramente</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Card de Relatórios e Exportação -->
+      <section class="card" style="max-width: 500px;">
+        <div class="card-head">
+          <h3>Relatórios e Exportação</h3>
+        </div>
+        <div style="padding: 20px;">
+          <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 16px;">
+            Extraia toda a base de dados atualizada instantaneamente em formato de folha de cálculo ou documento formatado.
+          </p>
+          <div style="display: flex; gap: 12px;">
+            <button type="button" class="btn-primary" style="background: #10b981;" onclick="exportarExcel()">📊 Descarregar Excel</button>
+            <button type="button" class="btn-primary" style="background: #ef4444;" onclick="exportarPDF()">📄 Descarregar PDF</button>
           </div>
         </div>
       </section>
@@ -70,21 +91,6 @@
     </div>
 
   </main>
-<!-- CARD DE EXPORTAÇÃO DE DADOS -->
-<section class="card" style="max-width: 500px;">
-  <div class="card-head">
-    <h3>Transparência e Exportação</h3>
-  </div>
-  <div style="padding: 20px;">
-    <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 16px;">
-      Gere pacotes de dados estruturados para prestação de contas ao TCE-MG ou envio alternativo à Prefeitura.
-    </p>
-    <div style="display: flex; gap: 12px;">
-      <button type="button" class="btn-primary" onclick="exportarJSON()">📥 Exportar JSON</button>
-      <button type="button" class="btn-primary" style="background: #0f172a;" onclick="exportarXML()">📥 Exportar XML</button>
-    </div>
-  </div>
-</section>
 
   <script type="module" src="./js/script.js"></script>
 </body>

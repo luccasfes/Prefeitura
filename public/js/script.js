@@ -376,92 +376,165 @@ if ("serviceWorker" in navigator) {
 
 import { getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Função auxiliar para converter Timestamps do Firestore em datas legíveis para exportação
-function limparDadosParaExport(docData) {
-  const dados = { ...docData };
-  for (const key in dados) {
-    if (dados[key] && typeof dados[key].toDate === "function") {
-      dados[key] = dados[key].toDate().toISOString();
-    }
+// Função auxiliar para formatar datas dos Timestamps do Firestore
+function formatarDataSimples(timestamp) {
+  if (!timestamp) return "-";
+  if (typeof timestamp.toDate === "function") {
+    return timestamp.toDate().toLocaleDateString("pt-BR");
   }
-  return dados;
+  return timestamp;
 }
 
-// --- EXPORTAR EM JSON ---
-window.exportarJSON = async function() {
+// --- EXPORTAR PARA EXCEL (.XLSX) ---
+window.exportarExcel = async function() {
   try {
     const contratosSnap = await getDocs(collection(db, "contratos"));
     const projetosSnap = await getDocs(collection(db, "projetos"));
     const tarefasSnap = await getDocs(collection(db, "tarefas_diarias"));
 
-    const dadosExportacao = {
-      versao: "2.0",
-      geradoEm: new Date().toISOString(),
-      contratos: contratosSnap.docs.map(d => ({ id: d.id, ...limparDadosParaExport(d.data()) })),
-      projetos: projetosSnap.docs.map(d => ({ id: d.id, ...limparDadosParaExport(d.data()) })),
-      tarefas: tarefasSnap.docs.map(d => ({ id: d.id, ...limparDadosParaExport(d.data()) }))
-    };
+    // 1. Mapear Contratos
+    const contratosData = contratosSnap.docs.map(d => {
+      const c = d.data();
+      return {
+        "Título / Objeto": c.titulo || "",
+        "Órgão / Secretaria": c.orgao || "",
+        "Nº do Contrato": c.numero || "",
+        "Esfera": c.esfera || "",
+        "Fornecedor": c.fornecedor || "",
+        "Vencimento": formatarDataSimples(c.data_vencimento),
+        "Observações": c.observacoes || ""
+      };
+    });
 
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dadosExportacao, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `govdocs_dados_${new Date().toISOString().slice(0,10)}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    // 2. Mapear Projetos
+    const projetosData = projetosSnap.docs.map(d => {
+      const p = d.data();
+      return {
+        "Título": p.titulo || "",
+        "Descrição": p.descricao || "",
+        "Responsável": p.responsavel || "",
+        "Próxima Ação": p.proxima_acao || "",
+        "Prioridade": p.prioridade || "",
+        "Prazo": formatarDataSimples(p.data_prazo)
+      };
+    });
+
+    // 3. Mapear Tarefas
+    const tarefasData = tarefasSnap.docs.map(d => {
+      const t = d.data();
+      return {
+        "Tarefa": t.texto || "",
+        "Estado": t.concluida ? "Concluída" : "Pendente"
+      };
+    });
+
+    // Criar o Livro de Excel (Workbook)
+    const wb = XLSX.utils.book_new();
+
+    if (contratosData.length > 0) {
+      const wsContratos = XLSX.utils.json_to_sheet(contratosData);
+      XLSX.utils.book_append_sheet(wb, wsContratos, "Contratos");
+    }
+    if (projetosData.length > 0) {
+      const wsProjetos = XLSX.utils.json_to_sheet(projetosData);
+      XLSX.utils.book_append_sheet(wb, wsProjetos, "Projetos");
+    }
+    if (tarefasData.length > 0) {
+      const wsTarefas = XLSX.utils.json_to_sheet(tarefasData);
+      XLSX.utils.book_append_sheet(wb, wsTarefas, "Tarefas");
+    }
+
+    // Gerar o ficheiro descarregável
+    XLSX.writeFile(wb, `govdocs_relatorio_${new Date().toISOString().slice(0,10)}.xlsx`);
   } catch (erro) {
-    console.error("Erro ao exportar JSON:", erro);
-    alert("Erro ao gerar o ficheiro JSON.");
+    console.error("Erro ao exportar Excel:", erro);
+    alert("Não foi possível gerar o ficheiro Excel.");
   }
 };
 
-// --- EXPORTAR EM XML ---
-window.exportarXML = async function() {
+// --- EXPORTAR PARA PDF ---
+window.exportarPDF = async function() {
   try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Título do Relatório
+    doc.setFontSize(18);
+    doc.setTextColor(15, 23, 42);
+    doc.text("Relatório de Gestão - GovDocs", 14, 20);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Gerado em: ${new Date().toLocaleDateString("pt-BR")}`, 14, 28);
+
+    let posY = 36;
+
+    // Buscar Contratos para a tabela PDF
     const contratosSnap = await getDocs(collection(db, "contratos"));
+    if (!contratosSnap.empty) {
+      doc.setFontSize(14);
+      doc.setTextColor(37, 99, 235);
+      doc.text("Contratos e Prazos", 14, posY);
+      posY += 6;
+
+      const contratosRows = contratosSnap.docs.map(d => {
+        const c = d.data();
+        return [
+          c.titulo || "",
+          c.orgao || "",
+          c.numero || "",
+          formatarDataSimples(c.data_vencimento)
+        ];
+      });
+
+      doc.autoTable({
+        startY: posY,
+        head: [['Título / Objeto', 'Órgão', 'Nº Contrato', 'Vencimento']],
+        body: contratosRows,
+        theme: 'grid',
+        headStyles: { fillColor: [15, 35, 63] }
+      });
+
+      posY = doc.lastAutoTable.finalY + 14;
+    }
+
+    // Buscar Projetos para a tabela PDF
     const projetosSnap = await getDocs(collection(db, "projetos"));
+    if (!projetosSnap.empty) {
+      // Verificar se cabe na página, senão cria nova página
+      if (posY > 220) {
+        doc.addPage();
+        posY = 20;
+      }
 
-    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<GovDocsExport geradoEm="' + new Date().toISOString() + '">\n';
-    
-    xml += '  <Contratos>\n';
-    contratosSnap.forEach(d => {
-      const c = limparDadosParaExport(d.data());
-      xml += `    <Contrato id="${d.id}">\n`;
-      xml += `      <Titulo><![CDATA[${c.titulo || ''}]]></Titulo>\n`;
-      xml += `      <Orgao><![CDATA[${c.orgao || ''}]]></Orgao>\n`;
-      xml += `      <Numero><![CDATA[${c.numero || ''}]]></Numero>\n`;
-      xml += `      <Esfera>${c.esfera || ''}</Esfera>\n`;
-      xml += `      <Fornecedor><![CDATA[${c.fornecedor || ''}]]></Fornecedor>\n`;
-      xml += `      <Vencimento>${c.data_vencimento || ''}</Vencimento>\n`;
-      xml += `    </Contrato>\n`;
-    });
-    xml += '  </Contratos>\n';
+      doc.setFontSize(14);
+      doc.setTextColor(37, 99, 235);
+      doc.text("Projetos e Próximas Ações", 14, posY);
+      posY += 6;
 
-    xml += '  <Projetos>\n';
-    projetosSnap.forEach(d => {
-      const p = limparDadosParaExport(d.data());
-      xml += `    <Projeto id="${d.id}">\n`;
-      xml += `      <Titulo><![CDATA[${p.titulo || ''}]]></Titulo>\n`;
-      xml += `      <Responsavel><![CDATA[${p.responsavel || ''}]]></Responsavel>\n`;
-      xml += `      <ProximaAcao><![CDATA[${p.proxima_acao || ''}]]></ProximaAcao>\n`;
-      xml += `      <Prioridade>${p.prioridade || ''}</Prioridade>\n`;
-      xml += `      <Prazo>${p.data_prazo || ''}</Prazo>\n`;
-      xml += `    </Projeto>\n`;
-    });
-    xml += '  </Projetos>\n';
+      const projetosRows = projetosSnap.docs.map(d => {
+        const p = d.data();
+        return [
+          p.titulo || "",
+          p.responsavel || "",
+          p.proxima_acao || "",
+          formatarDataSimples(p.data_prazo)
+        ];
+      });
 
-    xml += '</GovDocsExport>';
+      doc.autoTable({
+        startY: posY,
+        head: [['Título', 'Responsável', 'Próxima Ação', 'Prazo']],
+        body: projetosRows,
+        theme: 'grid',
+        headStyles: { fillColor: [15, 35, 63] }
+      });
+    }
 
-    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", url);
-    downloadAnchor.setAttribute("download", `govdocs_dados_${new Date().toISOString().slice(0,10)}.xml`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    // Guardar/Descarregar PDF
+    doc.save(`govdocs_relatorio_${new Date().toISOString().slice(0,10)}.pdf`);
   } catch (erro) {
-    console.error("Erro ao exportar XML:", erro);
-    alert("Erro ao gerar o ficheiro XML.");
+    console.error("Erro ao exportar PDF:", erro);
+    alert("Não foi possível gerar o ficheiro PDF.");
   }
 };
